@@ -1,0 +1,7 @@
+p 30.0 50.0 p0 4 n {buffer reception} ne
+t 110.0 100.0 t0 0 w n
+p 1040.0 465.0 p1 0 n {buffer decodage} ne
+e p0 t0 1 n
+h decodage
+
+
