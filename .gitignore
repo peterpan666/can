@@ -20,3 +20,16 @@ $RECYCLE.BIN/
 
 #Temp File
 ~*
+
+#CooCox files
+*.out
+*.o
+*.d
+*.lst
+*.map
+*.dep
+*.uvgui.*
+*.uvopt
+*.zip
+*.db
+*.cogui
