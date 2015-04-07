@@ -28,10 +28,7 @@ int main(void){
 //Interruption du Timer5 sur l'évènement "update" (base de temps)
 void TIM5_IRQHandler(void)
 {
-	//Gestion de la variable temporelle de la tache cligno
-	if(GLB_timer_cligno != 0){
-		GLB_timer_cligno--;
-	}
+	cligno_timer();
 
 	//Bagottage de la led rouge
 	GPIOD->ODR ^= GPIO_Pin_14;

@@ -7,6 +7,13 @@
 //permet d'exécuter le process "timer_cligno" avec un temps de pause
 uint8_t GLB_timer_cligno = 0;
 
+void cligno_timer(void) {
+	//Gestion de la variable temporelle de la tache cligno
+	if(GLB_timer_cligno != 0){
+		GLB_timer_cligno--;
+	}
+}
+
 void cligno_task(void) {
 	//Machine d'état de la tache cligno
 	if(!GLB_timer_cligno){
