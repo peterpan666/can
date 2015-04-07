@@ -34,4 +34,5 @@ $RECYCLE.BIN/
 *.db
 *.cogui
 *.coproj
+*.comarker
 code/sniffer/
