@@ -4,6 +4,7 @@
 
 #include "lib.h"
 #include "decode.h"
+#include "globals.h"
 
 //permet d'executer le process "timer_decode" avec un temps de pause
 uint8_t timer_decode = 0;

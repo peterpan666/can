@@ -17,4 +17,18 @@
 //defini un nouveau type de donnees "bool" qui peut prendre FALSE ou TRUE
 typedef enum {FALSE = 0, TRUE = !FALSE} bool;
 
+//defini un nouveau type de donnees pour representer les trames (maximum 24 octets)
+typedef struct recv_frame {
+	uint8_t size;
+	uint8_t data[24];
+} recv_frame_t;
+
+//defini un nouveau type de donnees pour representer le buffer de reception (max 256 trames)
+typedef struct recv_buffer {
+	uint8_t read;
+	uint8_t write;
+	recv_frame_t buffer[256];
+} recv_buffer_t;
+
+
 #endif
