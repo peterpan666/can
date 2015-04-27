@@ -8,7 +8,6 @@
 
 #include "lib.h"
 #include "cligno.h"
-#include "decode.h"
 
 int main(void){
 	SystemInit();	//Initialisation du systeme
