@@ -9,13 +9,13 @@
 #include "lib.h"
 #include "cligno.h"
 
-//permet d'exécuter le process "timer_cligno" avec un temps de pause
+//permet d'executer le process "timer_cligno" avec un temps de pause
 extern uint8_t GLB_timer_cligno;
 
 int main(void){
-	SystemInit();	//Initialisation du système
+	SystemInit();	//Initialisation du systeme
 
-	//Initialisation des périphériques
+	//Initialisation des peripheriques
 	GPIO_Start();
 	USART3_Start();
 	TIM5_Start();
@@ -25,7 +25,7 @@ int main(void){
     }
 }
 
-//Interruption du Timer5 sur l'évènement "update" (base de temps)
+//Interruption du Timer5 sur l'evenement "update" (base de temps)
 void TIM5_IRQHandler(void)
 {
 	cligno_timer();
