@@ -8,6 +8,7 @@
 
 #include "lib.h"
 #include "cligno.h"
+#include "decode.h"
 
 int main(void){
 	SystemInit();	//Initialisation du systeme
@@ -19,6 +20,7 @@ int main(void){
 
     while(1){
     	cligno_task();
+    	decode_task();
     }
 }
 
@@ -26,6 +28,7 @@ int main(void){
 void TIM5_IRQHandler(void)
 {
 	cligno_timer();
+	decode_timer();
 
 	//Bagottage de la led rouge
 	GPIOD->ODR ^= GPIO_Pin_14;
