@@ -3,5 +3,6 @@
 
 void decode_timer(void);
 void decode_task(void);
+void decode_init(void);
 
 #endif

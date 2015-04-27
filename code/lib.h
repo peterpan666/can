@@ -17,8 +17,4 @@
 //defini un nouveau type de donnees "bool" qui peut prendre FALSE ou TRUE
 typedef enum {FALSE = 0, TRUE = !FALSE} bool;
 
-void USART3_Start(void);
-void GPIO_Start(void);
-void TIM5_Start(void);
-
 #endif
