@@ -4,7 +4,7 @@
 #include "lib.h"
 #include "decode.h"
 
-//permet d'exécuter le process "timer_decode" avec un temps de pause
+//permet d'executer le process "timer_decode" avec un temps de pause
 uint8_t GLB_timer_decode = 0;
 
 void decode_timer(void) {
@@ -15,9 +15,9 @@ void decode_timer(void) {
 }
 
 void decode_task(void) {
-	//Machine d'état de la tache decode
+	//Machine d'etat de la tache decode
 	if(!GLB_timer_decode){
-		GLB_timer_decode = conv_bdt(1000);//Base de temps de répétition de la tache decode
+		GLB_timer_decode = conv_bdt(1000);//Base de temps de repetition de la tache decode
 		GPIOD->ODR ^= GPIO_Pin_13;//Bagottage de la LED verte
 	}
 }
