@@ -8,9 +8,7 @@
 
 #include "lib.h"
 #include "cligno.h"
-
-//permet d'executer le process "timer_cligno" avec un temps de pause
-extern uint8_t GLB_timer_cligno;
+#include "decode.h"
 
 int main(void){
 	SystemInit();	//Initialisation du systeme
