@@ -9,6 +9,7 @@
 #include "lib.h"
 #include "cligno.h"
 #include "decode.h"
+#include "emission.h"
 
 void TIM5_init(void);
 

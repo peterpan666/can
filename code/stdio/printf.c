@@ -6,6 +6,7 @@
  ********************************************************************************/
 #include <stdio.h>
 #include <stdarg.h>
+#include "stm32f4xx_usart.h"// USAT library
 
 
 /**
@@ -21,6 +22,7 @@ void PrintChar(char c)
 	   while(Transfer not completed);
 	   Transmit a char;
 	*/	
+	USART_SendData(USART3,c); // transmit char on USART3
 }
 
 /** Maximum string size allowed (in bytes). */
