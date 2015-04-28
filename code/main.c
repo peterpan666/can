@@ -11,6 +11,7 @@
 #include "cligno.h"
 #include "decode.h"
 #include "emission.h"
+#include "reception.h"
 
 void TIM5_init(void);
 
@@ -24,11 +25,13 @@ int main(void) {
 	cligno_init();
 	decode_init();
 	emission_init();
+	reception_init();
 
     while(1){
     	cligno_task();
     	decode_task();
     	emission_task();
+    	reception_task();
     }
 }
 
@@ -37,6 +40,7 @@ void TIM5_IRQHandler(void) {
 	cligno_timer();
 	decode_timer();
 	emission_timer();
+	reception_timer();
 
 	//Bagottage de la led rouge
 	GPIOD->ODR ^= GPIO_Pin_14;
