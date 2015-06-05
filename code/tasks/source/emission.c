@@ -11,18 +11,18 @@
 
 //memset(received_string,0,MAX_LENGTH);//Flush: init tous les caracters a vide
 //déclarations des fonctions
-void USART3_Start(void);
-void GPIO_config(void);
-void USART_puts(USART_TypeDef* USARTx, volatile char *s);
+static void USART3_Start(void);
+static void GPIO_config(void);
+static void USART_puts(USART_TypeDef* USARTx, volatile char *s);
 
 //void main_send_RS232(void);
 
 
 //déclarations des variables
-uint8_t timer_emission = 0;
-uint16_t usart3_tmp=0;
-bool flag_hyp_wait_cmd;
-uint8_t i = 0,j=0,k=0;
+static uint8_t timer_emission = 0;
+static uint16_t usart3_tmp=0;
+static bool flag_hyp_wait_cmd;
+static uint8_t i = 0,j=0,k=0;
 
 
 
@@ -51,7 +51,7 @@ void emission_task(void) {
 		timer_emission = conv_bdt(1000);//Base de temps de repetition de la tache cligno
 		GPIOD->ODR ^= GPIO_Pin_15;//Bagottage de la LED bleue
 
-		for (   j=0; j<5;j++)
+		for (j = 0; j < 5; j++)
 		{
 			printf("%s",GLB_message_accueil[j]);
 		}
@@ -99,51 +99,51 @@ void main_send_RS232(void)
 // ----------------------------------s
 void USART3_Start()
 {
-GPIO_InitTypeDef 		GPIO_InitStructure;
-USART_InitTypeDef 		USART_InitStructure;
-NVIC_InitTypeDef		NVIC_InitStructure;
+	GPIO_InitTypeDef 		GPIO_InitStructure;
+	USART_InitTypeDef 		USART_InitStructure;
+	NVIC_InitTypeDef		NVIC_InitStructure;
 
-// Start GPIOD Clock for USART3
-RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	// Start GPIOD Clock for USART3
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 
-// Start APB1 clock for USART3
-RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+	// Start APB1 clock for USART3
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
 
-// GPIOC Configuration for USART3 (TX on PD8 & RX on PD9)
-GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
-GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-GPIO_Init(GPIOD, &GPIO_InitStructure);
+	// GPIOC Configuration for USART3 (TX on PD8 yellow & RX on PD9 orange)
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-// Connect the TX pin (PD8) to USART3 alternative function
-GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
-// Connect the RX pin (PD9) to USART3 alternative function
-GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
+	// Connect the TX pin (PD8) to USART3 alternative function
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
+	// Connect the RX pin (PD9) to USART3 alternative function
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
 
-// Setup the properties of USART3
-//ATTENTION AU HSE dans le fichier stm32f4xx.h (8MHz) quartz externe
-USART_InitStructure.USART_BaudRate = 115200;
-USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-USART_InitStructure.USART_StopBits = USART_StopBits_1;
-USART_InitStructure.USART_Parity = USART_Parity_No;
-USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-USART_Init(USART3, &USART_InitStructure);
+	// Setup the properties of USART3
+	//ATTENTION AU HSE dans le fichier stm32f4xx.h (8MHz) quartz externe
+	USART_InitStructure.USART_BaudRate = 115200;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+	USART_Init(USART3, &USART_InitStructure);
 
-//Setup the USART3 interrupt
-USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // enable the USART2 receive interrupt
+	//Setup the USART3 interrupt
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE); // enable the USART2 receive interrupt
 
-NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;	// we want to configure the USART3 interrupts
-NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;// this sets the priority group of the USART3 interrupts
-NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	// this sets the subpriority inside the group
-NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;	// the USART3 interrupts are globally enabled
-NVIC_Init(&NVIC_InitStructure);
+	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;	// we want to configure the USART3 interrupts
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;// this sets the priority group of the USART3 interrupts
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	// this sets the subpriority inside the group
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;	// the USART3 interrupts are globally enabled
+	NVIC_Init(&NVIC_InitStructure);
 
 
-// Enable USART3
-USART_Cmd(USART3, ENABLE);
+	// Enable USART3
+	USART_Cmd(USART3, ENABLE);
 
 }
 
