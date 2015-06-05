@@ -2,7 +2,8 @@
 #define _EMISSION_H_
 
 void emission_timer(void);
+void emission_init(void);
 void emission_task(void);
-void emission_start(void);
+
 
 #endif

@@ -22,6 +22,7 @@ void PrintChar(char c)
 	   while(Transfer not completed);
 	   Transmit a char;
 	*/	
+	while(USART_GetFlagStatus(USART3,USART_FLAG_TC) == RESET);
 	USART_SendData(USART3,c); // transmit char on USART3
 }
 

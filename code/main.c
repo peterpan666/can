@@ -2,9 +2,9 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_tim.h"
-#include "misc.h"
 #include "stm32f4xx_usart.h"
 #include "stdio.h"
+#include "misc.h"
 
 #include "lib.h"
 #include "cligno.h"
@@ -20,12 +20,14 @@ int main(void) {
 	//Initialisation des peripheriques
 	TIM5_init();
 
-	cligno_init();
-	decode_init();
+	//cligno_init();
+	//decode_init();
+	emission_init();
 
     while(1){
-    	cligno_task();
-    	decode_task();
+    	//cligno_task();
+    	//decode_task();
+    	emission_task();
     }
 }
 
@@ -33,6 +35,7 @@ int main(void) {
 void TIM5_IRQHandler(void) {
 	cligno_timer();
 	decode_timer();
+	emission_timer();
 
 	//Bagottage de la led rouge
 	GPIOD->ODR ^= GPIO_Pin_14;
