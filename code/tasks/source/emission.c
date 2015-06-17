@@ -13,23 +13,23 @@
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
-static void USART_puts(USART_TypeDef* USARTx, volatile char *s);
 
 //void main_send_RS232(void);
 
 
 //déclarations des variables
 static uint8_t timer_emission = 0;
-static uint16_t usart3_tmp=0;
 static bool flag_hyp_wait_cmd;
-static uint8_t i = 0,j=0,k=0;
-
-
+static const char message_accueil[5][70] = {
+	 {"Sniffer BUS CAN\r\n"},
+	 {"Presentation des commandes\r\n"},
+	 {"Commande d = Afficher la trame complete\r\n"},
+	 {"Commande b = Afficher la trame sans Bitstuffing\r\n"},
+	 {"Commande h = Menu d'aide\r\n\n"}
+ };
 
 //static const uint8_t MAX_LENGTH=7;
-#define MAX_LENGTH 7
-volatile char received_string[MAX_LENGTH + 1];
-
+static char received_char = 0;
 
 void emission_timer(void) {
 	//Gestion de la variable temporelle de la tache cligno
@@ -46,53 +46,35 @@ void emission_init(void)
 }
 
 void emission_task(void) {
-	//Machine d'etat de la tache cligno
+	static uint8_t j = 0;
+	static uint8_t machine_state = 0;
+
 	if(!timer_emission){
-		timer_emission = conv_bdt(1000);//Base de temps de repetition de la tache cligno
+		timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
 		GPIOD->ODR ^= GPIO_Pin_15;//Bagottage de la LED bleue
 
-		for (j = 0; j < 5; j++)
+		if (flag_hyp_wait_cmd == TRUE && machine_state == 0)
 		{
-			printf("%s",GLB_message_accueil[j]);
+			machine_state = received_char;
+			flag_hyp_wait_cmd=FALSE;
 		}
 
-
-
-		/*if (flag_hyp_wait_cmd==TRUE)
-		{
-			printf("%s",received_string);
-			flag_hyp_wait_cmd=FALSE;
-			memset(received_string,0,MAX_LENGTH);//Flush: init tous les caracters a vide
-
-		}*/
+		switch (machine_state) {
+			default:
+				machine_state = 0;
+			case 0:
+				break;
+			case 'h':
+				if (j < 5) {
+					printf("%s",message_accueil[j++]);
+				} else {
+					j = 0;
+					machine_state = 0;
+				}
+				break;
+		}
 	}
 }
-
-
-
-/*
-void main_send_RS232(void)
-{
-    if(GLB_send_finish == 0)
-    {
-        if(GLB_message[GLB_current_character] != '\0')
-        {
-               GLB_data_to_send = GLB_message[GLB_current_character];
-               printf("%c",GLB_data_to_send);
-               GLB_current_character++;
-         }
-        else
-        {
-            GLB_current_character = 0;
-            GLB_send_finish = 1;
-        }
-    }
-}
-
-
-*/
-
-
 
 
 // USART3 (Rx & Tx) for debug Terminal
@@ -163,36 +145,11 @@ void GPIO_config()
 }
 
 
-//Interruption sur UART3
 void USART3_IRQHandler(void){
 	// check if the USART3 receive interrupt flag was set
 	if( USART_GetITStatus(USART3, USART_IT_RXNE) ){
-
-		static uint8_t cnt = 0; // this counter is used to determine the string length
-		char t = USART3->DR; // the character from the USART3 data register is saved in t
-
-		/* check if the received character is not the LF character (used to determine end of string)
-		 * or the if the maximum string length has been reached
-		 */
-		if( (t != 33) && (cnt < MAX_LENGTH) ){ //33=!
-			received_string[cnt] = t;
-			cnt++;
-		}
-		else{ // otherwise reset the character counter and print the received string
-			cnt = 0;
-			//USART_puts(USART3, received_string);
-			flag_hyp_wait_cmd = TRUE; //Commande reçu
-
-		}
+		received_char = USART3->DR;
+		flag_hyp_wait_cmd = TRUE;
+		USART_ClearFlag(USART3, USART_IT_RXNE);
 	}
 }
-/*
-void USART_puts(USART_TypeDef* USARTx, volatile char *s){
-
-	while(*s){
-		// wait until data register is empty
-		while( !(USARTx->SR & 0x00000040) );
-		USART_SendData(USARTx, *s);
-		*s++;
-	}
-}*/

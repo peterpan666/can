@@ -6,17 +6,6 @@
 recv_buffer_t GLB_recv_buffer = {0};
 decd_buffer_t GLB_decd_buffer = {0};
 
-//********************** Constantes pour l'affichage du menu *****************
-
- const unsigned char GLB_message_accueil[5][200] ={
-		 {"Sniffer BUS CAN\n\r"},
-		 {"\n\rPresentation des commandes\n\n\r"},
-		 {"1: Commande D = Afficher la trame complete\n\r"},
-		 {"2: Commande B = Afficher la trame sans Bitstuffing\n\r"},
-		 {"3: Commande H = menu d'aide\n\n\r"}
- 	 	 };
-
-
 
  //************* state machine ******************
 // unsigned char GLB_timer_state_machine=0;
