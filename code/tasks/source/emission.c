@@ -9,27 +9,22 @@
 #include "emission.h"
 #include "globals.h"
 
-//memset(received_string,0,MAX_LENGTH);//Flush: init tous les caracters a vide
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
 
-//void main_send_RS232(void);
-
-
 //déclarations des variables
 static uint8_t timer_emission = 0;
 static bool flag_hyp_wait_cmd;
-static const char message_accueil[5][70] = {
+static char received_char = 0;
+static const char message_accueil[6][70] = {
 	 {"Sniffer BUS CAN\r\n"},
 	 {"Presentation des commandes\r\n"},
-	 {"Commande d = Afficher la trame complete\r\n"},
+	 {"Commande d = Trame complete\r\n"},
 	 {"Commande b = Afficher la trame sans Bitstuffing\r\n"},
+	 {"Commande s = Stopper l'affichage\r\n"},
 	 {"Commande h = Menu d'aide\r\n\n"}
  };
-
-//static const uint8_t MAX_LENGTH=7;
-static char received_char = 0;
 
 void emission_timer(void) {
 	//Gestion de la variable temporelle de la tache cligno
@@ -46,31 +41,39 @@ void emission_init(void)
 }
 
 void emission_task(void) {
-	static uint8_t j = 0;
+	static uint8_t i = 0;
 	static uint8_t machine_state = 0;
 
+	if (flag_hyp_wait_cmd == TRUE && (machine_state == 0 || received_char == 's'))
+	{
+		machine_state = received_char;
+		flag_hyp_wait_cmd=FALSE;
+		timer_emission = 0;
+	}
+
 	if(!timer_emission){
-		timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
 		GPIOD->ODR ^= GPIO_Pin_15;//Bagottage de la LED bleue
 
-		if (flag_hyp_wait_cmd == TRUE && machine_state == 0)
-		{
-			machine_state = received_char;
-			flag_hyp_wait_cmd=FALSE;
-		}
-
 		switch (machine_state) {
+			case 's':
+				i = 0;
 			default:
 				machine_state = 0;
 			case 0:
 				break;
 			case 'h':
-				if (j < 5) {
-					printf("%s",message_accueil[j++]);
+				if (i < 6) {
+					printf("%s",message_accueil[i++]);
+					timer_emission = conv_bdt(10);
 				} else {
-					j = 0;
+					i = 0;
 					machine_state = 0;
 				}
+				break;
+			case 'd':
+				//TODO: Tetster si de nouvelles data sont dispo dans le buffer de décodage
+				printf("%s",message_accueil[0]);
+				timer_emission = conv_bdt(100);//Base de temps de repetition de la tache cligno
 				break;
 		}
 	}
