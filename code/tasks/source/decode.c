@@ -21,23 +21,38 @@ void decode_task(void) {
 	if(!timer_decode){
 		timer_decode = conv_bdt(1);//Base de temps de repetition de la tache decode
 	}
-	// Decodage de la trame pointee par read dans le buffer de reception
-	//destuf(&GLB_recv_buffer.buffer[GLB_recv_buffer.read++], &GLB_decd_buffer.buffer[GLB_decd_buffer.write++]);
-	parse_frame(&GLB_decd_buffer.buffer[GLB_decd_buffer.read++]);
+	// Destuffing de la trame pointee par read dans le buffer de reception et copie dans le buffer de decodage
+	destuf(&GLB_recv_buffer.buffer[GLB_recv_buffer.read++], &GLB_decd_buffer.buffer[GLB_decd_buffer.write]);
+	// Decodage de la trame directement dans le buffer de reception
+	parse_frame(&GLB_decd_buffer.buffer[GLB_decd_buffer.write++]);
 }
 
 void decode_init(void) {
-	GLB_decd_buffer.buffer[0].fixed_field.tab[0] = 0b01111000;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[1] = 0b00001111;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[2] = 0b01111010;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[3] = 0b11110111;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[4] = 0b01101101;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[5] = 0b11110101;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[6] = 0b11110110;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[7] = 0b11010101;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[8] = 0b11101101;
-	GLB_decd_buffer.buffer[0].fixed_field.tab[9] = 0b01111111;
-	GLB_decd_buffer.buffer[0].size = 10;
+   /*	Trame de test avec bitstuffing
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 0
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[0].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[0].buffer[1] = 0b00001111;
+	GLB_recv_buffer.buffer[0].buffer[2] = 0b11110110;
+	GLB_recv_buffer.buffer[0].buffer[3] = 0b11101110;
+	GLB_recv_buffer.buffer[0].buffer[4] = 0b10110011;
+	GLB_recv_buffer.buffer[0].buffer[5] = 0b11010101;
+	GLB_recv_buffer.buffer[0].buffer[6] = 0b11011011;
+	GLB_recv_buffer.buffer[0].buffer[7] = 0b10100111;
+	GLB_recv_buffer.buffer[0].buffer[8] = 0b01101110;
+	GLB_recv_buffer.buffer[0].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[0].buffer[10] = 0b00000011;
+	GLB_recv_buffer.buffer[0].size = 11;
 }
 
 void destuf (frame_t* in, decd_frame_t* out) {
@@ -45,7 +60,7 @@ void destuf (frame_t* in, decd_frame_t* out) {
 	// On parcours le tableau de 24 octet contenant la trame
 	current_bit = in->buffer[0] & 0x1;
 	bit_ref = current_bit;
-	pT_frame_t eos;
+	pT_frame_t eos, pT_cp;
 	eos = compute_eos(in);
 	for (i = 0; i <= eos.ind; i++){
 		if (i == eos.ind)
@@ -74,6 +89,11 @@ void destuf (frame_t* in, decd_frame_t* out) {
 				bit_ref = current_bit;
 			}
 		}
+	}
+	// On copie le reste de la trame (sans bitstuffing) a la suite
+	for (i = eos.ind * 8 + eos.off + 1; i < in->size * 8 -1; i++) {
+		get_pT_from_bit_pos(i, &pT_cp);
+		write_bit_in_frame(out, read_tab(in->buffer, pT_cp));
 	}
 }
 
