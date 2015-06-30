@@ -170,6 +170,78 @@ void emission_task(void) {
 				}
 				timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
 				break;
+			case 'f':
+				switch (i++) {
+					case 0:
+						printf("|SOF|  ID   |RTR|R0 |R1 |DLC|        DATA        |  CRC   | ACK | EOF  |INTER|\r\n");
+						printf("==============================================================================\r\n");
+						break;
+					case 1:
+						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
+							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+							printf("| ");
+						} else {
+							i = 1;
+						}
+						break;
+					case 2:
+						printf("%d", local_frame.fixed_field.fields_11.sof);
+						printf(" | ");
+						break;
+					case 3:
+						printf("0x%x", local_frame.fixed_field.fields_11.id);
+						printf(" | ");
+						break;
+					case 4:
+						printf("%d", local_frame.fixed_field.fields_11.rtr);
+						printf(" | ");
+						break;
+					case 5:
+						printf("%d", local_frame.fixed_field.fields_11.r0);
+						printf(" | ");
+						break;
+					case 6:
+						printf("%d", local_frame.fixed_field.fields_11.r1);
+						printf(" | ");
+						break;
+					case 7:
+						printf("%d", local_frame.fixed_field.fields_11.dlc);
+						printf(" | ");
+						break;
+					case 8:
+						printf("%s","0x");
+						for (j = 7; j >= 0; j--) {
+							if (j < local_frame.fixed_field.fields_11.dlc) {
+								printf("%2x",local_frame.data[j]);
+							} else {
+								printf("00");
+							}
+
+						}
+						printf(" | ");
+						break;
+					case 9:
+						printf("0x%x", local_frame.fixed_field.fields_11.crc);
+						printf(" | ");
+						break;
+					case 10:
+						printf("0x%x", local_frame.fixed_field.fields_11.ack);
+						printf(" | ");
+						break;
+					case 11:
+						printf("0x%x", local_frame.fixed_field.fields_11.eof);
+						printf(" | ");
+						break;
+					case 12:
+						printf("0x%x", local_frame.fixed_field.fields_11.inter);
+						break;
+					default:
+						printf(" |\r\n");
+						i = 1;
+						break;
+				}
+				timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
+				break;
 		}
 	}
 }
