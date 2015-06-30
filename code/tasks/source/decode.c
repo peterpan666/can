@@ -4,7 +4,9 @@
 
 #include "lib.h"
 #include "decode.h"
-#include "globals.h"
+
+extern recv_buffer_t GLB_recv_buffer;
+extern decd_buffer_t GLB_decd_buffer;
 
 /* Erreurs detectees :
  *

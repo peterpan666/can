@@ -7,6 +7,7 @@
 #include "misc.h"
 
 #include "lib.h"
+#include "globals.h"
 #include "cligno.h"
 #include "decode.h"
 #include "emission.h"
@@ -20,13 +21,13 @@ int main(void) {
 	//Initialisation des peripheriques
 	TIM5_init();
 
-	//cligno_init();
-	//decode_init();
+	cligno_init();
+	decode_init();
 	emission_init();
 
     while(1){
-    	//cligno_task();
-    	//decode_task();
+    	cligno_task();
+    	decode_task();
     	emission_task();
     }
 }
