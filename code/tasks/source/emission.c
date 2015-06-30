@@ -61,6 +61,7 @@ void emission_task(void) {
 		switch (machine_state) {
 			case 's':
 				i = 0;
+				printf("\r\n");
 			default:
 				machine_state = 0;
 			case 0:
@@ -75,8 +76,14 @@ void emission_task(void) {
 				}
 				break;
 			case 'd':
-				//TODO: Tetster si de nouvelles data sont dispo dans le buffer de décodage
-				printf("%s",message_accueil[0]);
+				if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
+					printf("0x");
+					local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+					for (j = (local_frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
+						printf("%2x",local_frame.data[j]);
+					}
+					printf("\r\n");
+				}
 				timer_emission = conv_bdt(100);//Base de temps de repetition de la tache cligno
 				break;
 			case 'f':
