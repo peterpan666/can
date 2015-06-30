@@ -17,10 +17,12 @@ static void GPIO_config(void);
 static uint8_t timer_emission = 0;
 static bool flag_hyp_wait_cmd;
 static char received_char = 0;
-static const char message_accueil[6][70] = {
+#define nb_message_accueil 7
+static const char message_accueil[nb_message_accueil][70] = {
 	 {"Sniffer BUS CAN\r\n"},
 	 {"Presentation des commandes\r\n"},
-	 {"Commande d = Trame complete\r\n"},
+	 {"Commande f = Affiche les trames decodees en continue\r\n"},
+	 {"Commande d = Affiche les datas en continue\r\n"},
 	 {"Commande b = Afficher la trame sans Bitstuffing\r\n"},
 	 {"Commande s = Stopper l'affichage\r\n"},
 	 {"Commande h = Menu d'aide\r\n\n"}
@@ -43,6 +45,8 @@ void emission_init(void)
 void emission_task(void) {
 	static uint8_t i = 0;
 	static uint8_t machine_state = 0;
+	int8_t j = 0;
+	static decd_frame_t local_frame;
 
 	if (flag_hyp_wait_cmd == TRUE && (machine_state == 0 || received_char == 's'))
 	{
@@ -62,7 +66,7 @@ void emission_task(void) {
 			case 0:
 				break;
 			case 'h':
-				if (i < 6) {
+				if (i < nb_message_accueil) {
 					printf("%s",message_accueil[i++]);
 					timer_emission = conv_bdt(10);
 				} else {
@@ -74,6 +78,78 @@ void emission_task(void) {
 				//TODO: Tetster si de nouvelles data sont dispo dans le buffer de décodage
 				printf("%s",message_accueil[0]);
 				timer_emission = conv_bdt(100);//Base de temps de repetition de la tache cligno
+				break;
+			case 'f':
+				switch (i++) {
+					case 0:
+						printf("|SOF|  ID   |RTR|R0 |R1 |DLC|        DATA        |  CRC   | ACK | EOF  |INTER|\r\n");
+						printf("==============================================================================\r\n");
+						break;
+					case 1:
+						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
+							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+							printf("| ");
+						} else {
+							i = 1;
+						}
+						break;
+					case 2:
+						printf("%d", local_frame.fixed_field.fields_11.sof);
+						printf(" | ");
+						break;
+					case 3:
+						printf("0x%x", local_frame.fixed_field.fields_11.id);
+						printf(" | ");
+						break;
+					case 4:
+						printf("%d", local_frame.fixed_field.fields_11.rtr);
+						printf(" | ");
+						break;
+					case 5:
+						printf("%d", local_frame.fixed_field.fields_11.r0);
+						printf(" | ");
+						break;
+					case 6:
+						printf("%d", local_frame.fixed_field.fields_11.r1);
+						printf(" | ");
+						break;
+					case 7:
+						printf("%d", local_frame.fixed_field.fields_11.dlc);
+						printf(" | ");
+						break;
+					case 8:
+						printf("%s","0x");
+						for (j = 7; j >= 0; j--) {
+							if (j < local_frame.fixed_field.fields_11.dlc) {
+								printf("%2x",local_frame.data[j]);
+							} else {
+								printf("00");
+							}
+
+						}
+						printf(" | ");
+						break;
+					case 9:
+						printf("0x%x", local_frame.fixed_field.fields_11.crc);
+						printf(" | ");
+						break;
+					case 10:
+						printf("0x%x", local_frame.fixed_field.fields_11.ack);
+						printf(" | ");
+						break;
+					case 11:
+						printf("0x%x", local_frame.fixed_field.fields_11.eof);
+						printf(" | ");
+						break;
+					case 12:
+						printf("0x%x", local_frame.fixed_field.fields_11.inter);
+						break;
+					default:
+						printf(" |\r\n");
+						i = 1;
+						break;
+				}
+				timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
 				break;
 		}
 	}
