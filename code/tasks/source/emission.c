@@ -8,6 +8,8 @@
 #include "lib.h"
 #include "emission.h"
 
+extern decd_buffer_t GLB_decd_buffer;
+
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
