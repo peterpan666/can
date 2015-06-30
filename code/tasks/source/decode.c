@@ -7,7 +7,7 @@
 #include "globals.h"
 
 //permet d'executer le process "timer_decode" avec un temps de pause
-uint8_t timer_decode = 0;
+static uint8_t timer_decode = 0;
 
 void decode_timer(void) {
 	//Gestion de la variable temporelle de la tache decode
@@ -18,13 +18,17 @@ void decode_timer(void) {
 
 void decode_task(void) {
 	//Machine d'etat de la tache decode
-	if(!timer_decode){
-		timer_decode = conv_bdt(1);//Base de temps de repetition de la tache decode
+	if(timer_decode)
+		return;
+
+	timer_decode = conv_bdt(20);//Base de temps de repetition de la tache decode
+
+	if (GLB_recv_buffer.read != GLB_recv_buffer.write) {
+		// Destuffing de la trame pointee par read dans le buffer de reception et copie dans le buffer de decodage
+		destuf(&GLB_recv_buffer.buffer[GLB_recv_buffer.read++], &GLB_decd_buffer.buffer[GLB_decd_buffer.write]);
+		// Decodage de la trame directement dans le buffer de reception
+		parse_frame(&GLB_decd_buffer.buffer[GLB_decd_buffer.write++]);
 	}
-	// Destuffing de la trame pointee par read dans le buffer de reception et copie dans le buffer de decodage
-	destuf(&GLB_recv_buffer.buffer[GLB_recv_buffer.read++], &GLB_decd_buffer.buffer[GLB_decd_buffer.write]);
-	// Decodage de la trame directement dans le buffer de reception
-	parse_frame(&GLB_decd_buffer.buffer[GLB_decd_buffer.write++]);
 }
 
 void decode_init(void) {
@@ -53,6 +57,34 @@ void decode_init(void) {
 	GLB_recv_buffer.buffer[0].buffer[9] = 0b11111111;
 	GLB_recv_buffer.buffer[0].buffer[10] = 0b00000011;
 	GLB_recv_buffer.buffer[0].size = 11;
+	GLB_recv_buffer.write++;
+
+   /*	Trame de test avec bitstuffing
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 0
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[1].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[1].buffer[1] = 0b00001111;
+	GLB_recv_buffer.buffer[1].buffer[2] = 0b11110110;
+	GLB_recv_buffer.buffer[1].buffer[3] = 0b11101110;
+	GLB_recv_buffer.buffer[1].buffer[4] = 0b10110011;
+	GLB_recv_buffer.buffer[1].buffer[5] = 0b11010101;
+	GLB_recv_buffer.buffer[1].buffer[6] = 0b11011011;
+	GLB_recv_buffer.buffer[1].buffer[7] = 0b10100111;
+	GLB_recv_buffer.buffer[1].buffer[8] = 0b01101110;
+	GLB_recv_buffer.buffer[1].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[1].buffer[10] = 0b00000011;
+	GLB_recv_buffer.buffer[1].size = 11;
+	GLB_recv_buffer.write++;
 }
 
 void destuf (frame_t* in, decd_frame_t* out) {
