@@ -6,8 +6,20 @@
 #include "decode.h"
 #include "globals.h"
 
+/* Erreurs detectees :
+ *
+ * bit stuffing ....... ok
+ * dlc ................ ok
+ * crc ................
+ * r0 ................. ok
+ * id ................. ok
+ *
+ */
+
 //permet d'executer le process "timer_decode" avec un temps de pause
 static uint8_t timer_decode = 0;
+static uint8_t id_error, nb_id = 4;
+static uint16_t tab_id[8] = {0x500,2,0x7bc,5,6,7,8};
 
 void decode_timer(void) {
 	//Gestion de la variable temporelle de la tache decode
@@ -32,63 +44,39 @@ void decode_task(void) {
 }
 
 void decode_init(void) {
-   /*	Trame de test avec bitstuffing
-	*	sof  	: 0
-	*	id 		: 0x7bc
-	*	rtr	 	: 0
-	*	r0 		: 0
-	*	r1 		: 0
-	*	dlc 	: 0x4
-	*	data 	: 0xdeadbeef
-	*	crc 	: 0xbabe
-	*	ack 	: 0b01 (1)
-	*	eof 	: 0x7f
-	*	inter 	: 0b111 (0x7) */
+	int i;
+	for (i=0; i < 12; i++) {
+	   /*	Trame de test avec bitstuffing
+		*	sof  	: 0
+		*	id 		: 0x7bc
+		*	rtr	 	: 0
+		*	r0 		: 0
+		*	r1 		: 0
+		*	dlc 	: 0x4
+		*	data 	: 0xdeadbeef
+		*	crc 	: 0xbabe
+		*	ack 	: 0b01 (1)
+		*	eof 	: 0x7f
+		*	inter 	: 0b111 (0x7) */
 
-	GLB_recv_buffer.buffer[0].buffer[0] = 0b01111000;
-	GLB_recv_buffer.buffer[0].buffer[1] = 0b00001111;
-	GLB_recv_buffer.buffer[0].buffer[2] = 0b11110110;
-	GLB_recv_buffer.buffer[0].buffer[3] = 0b11101110;
-	GLB_recv_buffer.buffer[0].buffer[4] = 0b10110011;
-	GLB_recv_buffer.buffer[0].buffer[5] = 0b11010101;
-	GLB_recv_buffer.buffer[0].buffer[6] = 0b11011011;
-	GLB_recv_buffer.buffer[0].buffer[7] = 0b10100111;
-	GLB_recv_buffer.buffer[0].buffer[8] = 0b01101110;
-	GLB_recv_buffer.buffer[0].buffer[9] = 0b11111111;
-	GLB_recv_buffer.buffer[0].buffer[10] = 0b00000011;
-	GLB_recv_buffer.buffer[0].size = 11;
-	GLB_recv_buffer.write++;
-
-   /*	Trame de test avec bitstuffing
-	*	sof  	: 0
-	*	id 		: 0x7bc
-	*	rtr	 	: 0
-	*	r0 		: 0
-	*	r1 		: 0
-	*	dlc 	: 0x4
-	*	data 	: 0xdeadbeef
-	*	crc 	: 0xbabe
-	*	ack 	: 0b01 (1)
-	*	eof 	: 0x7f
-	*	inter 	: 0b111 (0x7) */
-
-	GLB_recv_buffer.buffer[1].buffer[0] = 0b01111000;
-	GLB_recv_buffer.buffer[1].buffer[1] = 0b00001111;
-	GLB_recv_buffer.buffer[1].buffer[2] = 0b11110110;
-	GLB_recv_buffer.buffer[1].buffer[3] = 0b11101110;
-	GLB_recv_buffer.buffer[1].buffer[4] = 0b10110011;
-	GLB_recv_buffer.buffer[1].buffer[5] = 0b11010101;
-	GLB_recv_buffer.buffer[1].buffer[6] = 0b11011011;
-	GLB_recv_buffer.buffer[1].buffer[7] = 0b10100111;
-	GLB_recv_buffer.buffer[1].buffer[8] = 0b01101110;
-	GLB_recv_buffer.buffer[1].buffer[9] = 0b11111111;
-	GLB_recv_buffer.buffer[1].buffer[10] = 0b00000011;
-	GLB_recv_buffer.buffer[1].size = 11;
-	GLB_recv_buffer.write++;
+		GLB_recv_buffer.buffer[i].buffer[0] = 0b01111000;
+		GLB_recv_buffer.buffer[i].buffer[1] = 0b00001111;
+		GLB_recv_buffer.buffer[i].buffer[2] = 0b11110110;
+		GLB_recv_buffer.buffer[i].buffer[3] = 0b11101110;
+		GLB_recv_buffer.buffer[i].buffer[4] = 0b10110011;
+		GLB_recv_buffer.buffer[i].buffer[5] = 0b11010101;
+		GLB_recv_buffer.buffer[i].buffer[6] = 0b11011011;
+		GLB_recv_buffer.buffer[i].buffer[7] = 0b10100111;
+		GLB_recv_buffer.buffer[i].buffer[8] = 0b01101110;
+		GLB_recv_buffer.buffer[i].buffer[9] = 0b11111111;
+		GLB_recv_buffer.buffer[i].buffer[10] = 0b00000011;
+		GLB_recv_buffer.buffer[i].size = 11;
+		GLB_recv_buffer.write++;
+	}
 }
 
 void destuf (frame_t* in, decd_frame_t* out) {
-	uint8_t current_bit, bit_ref, is_stuff_bit = 0, cnt = 0, limit = 5, i, j, end_bit = 8;
+	uint8_t current_bit, bit_ref, is_stuff_bit = 0, cnt = 0, limit = 5, i, j, end_bit = 8, scnt = 0;
 	// On parcours le tableau de 24 octet contenant la trame
 	current_bit = in->buffer[0] & 0x1;
 	bit_ref = current_bit;
@@ -116,6 +104,10 @@ void destuf (frame_t* in, decd_frame_t* out) {
 				}
 				write_bit_in_frame(out, current_bit);
 			} else {
+				scnt ++;
+				// Detection d'erreur
+				if(bit_ref == current_bit)
+					out->bs_error = 1;
 				is_stuff_bit = 0;
 				cnt = 1;
 				bit_ref = current_bit;
@@ -123,7 +115,7 @@ void destuf (frame_t* in, decd_frame_t* out) {
 		}
 	}
 	// On copie le reste de la trame (sans bitstuffing) a la suite
-	for (i = eos.ind * 8 + eos.off + 1; i < in->size * 8 -1; i++) {
+	for (i = eos.ind * 8 + eos.off + 1; i < eos.ind * 8 + eos.off + 13 + 1; i++) {
 		get_pT_from_bit_pos(i, &pT_cp);
 		write_bit_in_frame(out, read_tab(in->buffer, pT_cp));
 	}
@@ -151,9 +143,36 @@ pT_frame_t compute_eos(frame_t * f) {
 }
 
 void parse_frame (decd_frame_t * frame) {
-	uint8_t dlc = frame->fixed_field.fields_11.dlc;
-	get_data(frame,dlc,frame->data);
-	remove_data(frame,dlc);
+	uint8_t real_dlc, dlc, i;
+
+	if (frame->bs_error == 1) {
+		return;
+	}
+
+	// Extraction des donnees de la trame
+	dlc = frame->fixed_field.fields_11.dlc;
+	get_data(frame, dlc, frame->data);
+
+	// Supression des donnees de la trame
+	remove_data(frame, dlc);
+
+	/* ====== Detection d'erreurs ====== */
+	// R0
+	if (frame->fixed_field.fields_11.r0 != 0)
+		frame->r0_error = 1;
+
+	// dlc
+	real_dlc = frame->wr_ind * 8 + frame->wr_off - 28 - 19;
+	if (real_dlc != dlc * 8)
+		frame->dlc_error = 1;
+
+	// id
+	id_error = 1;
+	for (i = 0 ; i < nb_id; i++) {
+		if (frame->fixed_field.fields_11.id == tab_id[i])
+			id_error = 0;
+	}
+	frame->id_error = id_error;
 }
 
 void get_data(decd_frame_t * frame, uint8_t dlc, uint8_t data[8]) {

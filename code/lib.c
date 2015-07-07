@@ -7,22 +7,6 @@
 
 #include "lib.h"
 
-//void read_recv_buffer(recv_buffer_t recv_buffer, recv_frame_t * data, uint8_t nframes){
-//	uint8_t i, read;
-//	for (i = 0; i < nframes; i++) {
-//		read = recv_buffer.read--;
-//		data[i] = recv_buffer.buffer[read];
-//	}
-//}
-//
-//void read_decd_buffer(decd_buffer_t decd_buffer, decd_frame_t * data, uint8_t nframes){
-//	uint8_t i, read;
-//	for (i = 0; i < nframes; i++) {
-//		read = decd_buffer.read--;
-//		data[i] = decd_buffer.buffer[read];
-//	}
-//}
-
 uint8_t create_mask(uint8_t s, uint8_t e){
 	uint8_t m = 0;
 	uint8_t i;
@@ -87,20 +71,65 @@ uint32_t read_n_bit(uint8_t * tab, uint8_t spos, uint8_t nbits){
 	return val;
 }
 
-//void generate_bit_stuffing(uint8_t data_in[24], uint8_t data_out[24], uint32_t nbits){
-//	int bit_cnt = 0;
-//	int out_cnt = 0;
-//	uint8_t ind, shift, stuff_bit, current_byte_mask,n_prec_byte, data;
-//	for(bit_cnt = 4; bit_cnt < nbits; bit_cnt += 5){
-//		ind = bit_cnt/8;
-//		shift = bit_cnt%8;
-//		stuff_bit = ((data_in[ind] >> shift) & 0x1) == 0;
-//		if (shift < 4) {
-//			n_prec_byte = 4 - shift;
-//			current_byte_mask = create_mask(0, shift);
-//			data = (data_in[ind-1] >> (8 - n_prec_byte)) | ((data_in[ind] & current_byte_mask) << n_prec_byte) | (stuff_bit << 5);
-//		} else {
-//			data = ((data_in[ind] >> (shift - 4)) & 0b11111) | (stuff_bit << 5);
-//		}
-//	}
-//}
+void crcInit(void)
+{
+    uint16_t remainder;
+    uint16_t dividend;
+    uint8_t bit;
+    /*
+     * Compute the remainder of each possible dividend.
+     */
+    for (dividend = 0; dividend < 256; ++dividend)
+    {
+        /*
+         * Start with the dividend followed by zeros.
+         */
+        remainder = dividend << (WIDTH - 8);
+
+        /*
+         * Perform modulo-2 division, a bit at a time.
+         */
+        for (bit = 8; bit > 0; --bit)
+        {
+            /*
+             * Try to divide the current data bit.
+             */
+            if (remainder & TOPBIT)
+            {
+                remainder = (remainder << 1) ^ POLYNOMIAL;
+            }
+            else
+            {
+                remainder = (remainder << 1);
+            }
+        }
+
+        /*
+         * Store the result into the table.
+         */
+        crcTable[dividend] = remainder;
+    }
+
+}   /* crcInit() */
+
+uint16_t crcFast(uint8_t const message[], int nBytes)
+{
+    uint8_t data;
+    uint16_t remainder = 0;
+    int byte;
+
+    /*
+     * Divide the message by the polynomial, a byte at a time.
+     */
+    for (byte = 0; byte < nBytes; ++byte)
+    {
+        data = message[byte] ^ (remainder >> (WIDTH - 8));
+        remainder = crcTable[data] ^ (remainder << 8);
+    }
+
+    /*
+     * The final remainder is the CRC.
+     */
+    return (remainder);
+
+}   /* crcFast() */
