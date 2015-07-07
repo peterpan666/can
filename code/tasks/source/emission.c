@@ -20,13 +20,12 @@ extern decd_buffer_t GLB_decd_buffer;
 static uint8_t timer_emission = 0;
 static bool flag_hyp_wait_cmd;
 static char received_char = 0;
-#define nb_message_accueil 7
+#define nb_message_accueil 6
 static const char message_accueil[nb_message_accueil][70] = {
 	 {"Sniffer BUS CAN\r\n"},
 	 {"Presentation des commandes\r\n"},
 	 {"Commande f = Affiche les trames decodees en continue\r\n"},
 	 {"Commande d = Affiche les datas en continue\r\n"},
-	 {"Commande b = Afficher la trame sans Bitstuffing\r\n"},
 	 {"Commande s = Stopper l'affichage\r\n"},
 	 {"Commande h = Menu d'aide\r\n\n"}
  };
