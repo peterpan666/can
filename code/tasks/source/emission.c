@@ -7,11 +7,12 @@
 
 #include "lib.h"
 #include "emission.h"
-#include "globals.h"
 
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
+
+extern decd_buffer_t GLB_decd_buffer;
 
 //déclarations des variables
 static uint8_t timer_emission = 0;
