@@ -76,15 +76,24 @@ void emission_task(void) {
 				}
 				break;
 			case 'd':
-				if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
-					printf("0x");
-					local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
-					for (j = (local_frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
-						printf("%2x",local_frame.data[j]);
-					}
-					printf("\r\n");
+				switch (i) {
+					case 0:
+						printf("Data en mode continu\r\n");
+						i++;
+						break;
+					default:
+						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
+							printf("0x");
+							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+							for (j = (local_frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
+								printf("%x",local_frame.data[j]);
+							}
+							printf("\r\n");
+						}
+						break;
 				}
-				timer_emission = conv_bdt(100);//Base de temps de repetition de la tache cligno
+
+				timer_emission = conv_bdt(10);//Base de temps de repetition de la tache cligno
 				break;
 			case 'f':
 				switch (i++) {
