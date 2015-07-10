@@ -13,6 +13,7 @@ extern decd_buffer_t GLB_decd_buffer;
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
+static unsigned char test_frame(decd_frame_t frame);
 
 extern decd_buffer_t GLB_decd_buffer;
 
@@ -29,6 +30,8 @@ static const char message_accueil[nb_message_accueil][70] = {
 	 {"Commande s = Stopper l'affichage\r\n"},
 	 {"Commande h = Menu d'aide\r\n\n"}
  };
+
+void display_data(decd_frame_t frame);
 
 void emission_timer(void) {
 	//Gestion de la variable temporelle de la tache cligno
@@ -85,12 +88,15 @@ void emission_task(void) {
 						break;
 					default:
 						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
-							printf("0x");
 							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+							/*printf("0x");
 							for (j = (local_frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
 								printf("%x",local_frame.data[j]);
 							}
-							printf("\r\n");
+							printf("\r\n");*/
+							if (test_frame(local_frame)) {
+								display_data(local_frame);
+							}
 						}
 						break;
 				}
@@ -106,12 +112,15 @@ void emission_task(void) {
 					case 1:
 						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
 							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
-							printf("| ");
+							if (test_frame(local_frame) == 0) {
+								i = 1;
+							}
 						} else {
-							i = 1;
+							i = 1; //voir switch (i++)
 						}
 						break;
 					case 2:
+						printf("| ");
 						printf("%d", local_frame.fixed_field.fields_11.sof);
 						printf(" | ");
 						break;
@@ -171,6 +180,41 @@ void emission_task(void) {
 				break;
 		}
 	}
+}
+
+unsigned char test_frame(decd_frame_t frame) {
+	if (frame.bs_error) {
+		printf("Erreur de bitstuffing @bit: %d\r\n", frame.bs_error_pos);
+		return 0;
+	}
+	if (frame.crc_error) {
+		printf("Erreur de CRC\r\n");
+		return 0;
+	}
+	if (frame.dlc_error) {
+		printf("Erreur de DLC. DLC reçu %d, taille des données %d\r\n", frame.fixed_field.fields_11.dlc, frame.real_dlc);
+		return 0;
+	}
+	if (frame.id_error) {
+		printf("0x%x n'est pas un ID connu dans la liste des ID valides\r\n", frame.fixed_field.fields_11.id);
+		return 0;
+	}
+	if (frame.r0_error) {
+		printf("Erreur R0\r\n");
+		return 0;
+	}
+
+	return 1;
+}
+
+void display_data(decd_frame_t frame) {
+	int8_t j = 0;
+
+	printf("0x");
+	for (j = (frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
+		printf("%x",frame.data[j]);
+	}
+	printf("\r\n");
 }
 
 

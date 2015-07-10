@@ -290,8 +290,10 @@ void parse_frame (decd_frame_t * frame) {
 
 	// dlc
 	real_dlc = frame->wr_ind * 8 + frame->wr_off - 28 - 19;
-	if (real_dlc != dlc * 8)
+	if (real_dlc != dlc * 8) {
 		frame->dlc_error = 1;
+		frame->real_dlc = real_dlc/8;
+	}
 
 	// id
 	id_error = 1;
