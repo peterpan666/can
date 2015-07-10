@@ -42,6 +42,7 @@ typedef struct decd_frame {
 	uint8_t wr_ind;
 	uint8_t wr_off;
 	unsigned bs_error:1;
+	unsigned char bs_error_pos;
 	unsigned crc_error:1;
 	unsigned r0_error:1;
 	unsigned dlc_error:1;

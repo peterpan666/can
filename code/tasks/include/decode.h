@@ -10,3 +10,7 @@ void parse_frame (decd_frame_t * frame);
 void get_data(decd_frame_t * frame, uint8_t dlc, uint8_t data[8]);
 void remove_data(decd_frame_t * frame, uint8_t dlc);
 #endif
+
+#define IDLE	0
+#define DESTUF	1
+#define PARSE 	2

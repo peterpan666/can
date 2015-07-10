@@ -17,7 +17,7 @@
  */
 
 //permet d'executer le process "timer_decode" avec un temps de pause
-static uint8_t timer_decode = 0;
+static uint8_t timer_decode = 0, status = IDLE;
 static uint8_t id_error, nb_id = 4;
 static uint16_t tab_id[8] = {0x500,2,0x7bc,5,6,7,8};
 
@@ -35,44 +35,167 @@ void decode_task(void) {
 
 	timer_decode = conv_bdt(20);//Base de temps de repetition de la tache decode
 
-	if (GLB_recv_buffer.read != GLB_recv_buffer.write) {
+	switch (status) {
+
+	case IDLE :
+		if (GLB_recv_buffer.read != GLB_recv_buffer.write)
+			status = DESTUF;
+		break;
+
+	case DESTUF :
 		// Destuffing de la trame pointee par read dans le buffer de reception et copie dans le buffer de decodage
 		destuf(&GLB_recv_buffer.buffer[GLB_recv_buffer.read++], &GLB_decd_buffer.buffer[GLB_decd_buffer.write]);
+		status = PARSE;
+		break;
+
+	case PARSE :
 		// Decodage de la trame directement dans le buffer de reception
 		parse_frame(&GLB_decd_buffer.buffer[GLB_decd_buffer.write++]);
+		status = IDLE;
+		break;
+
 	}
 }
 
 void decode_init(void) {
-	int i;
-	for (i=0; i < 12; i++) {
-	   /*	Trame de test avec bitstuffing
-		*	sof  	: 0
-		*	id 		: 0x7bc
-		*	rtr	 	: 0
-		*	r0 		: 0
-		*	r1 		: 0
-		*	dlc 	: 0x4
-		*	data 	: 0xdeadbeef
-		*	crc 	: 0xbabe
-		*	ack 	: 0b01 (1)
-		*	eof 	: 0x7f
-		*	inter 	: 0b111 (0x7) */
+   /*	Trame de test avec bitstuffing sans erreur
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 1
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
 
-		GLB_recv_buffer.buffer[i].buffer[0] = 0b01111000;
-		GLB_recv_buffer.buffer[i].buffer[1] = 0b00001111;
-		GLB_recv_buffer.buffer[i].buffer[2] = 0b11110110;
-		GLB_recv_buffer.buffer[i].buffer[3] = 0b11101110;
-		GLB_recv_buffer.buffer[i].buffer[4] = 0b10110011;
-		GLB_recv_buffer.buffer[i].buffer[5] = 0b11010101;
-		GLB_recv_buffer.buffer[i].buffer[6] = 0b11011011;
-		GLB_recv_buffer.buffer[i].buffer[7] = 0b10100111;
-		GLB_recv_buffer.buffer[i].buffer[8] = 0b01101110;
-		GLB_recv_buffer.buffer[i].buffer[9] = 0b11111111;
-		GLB_recv_buffer.buffer[i].buffer[10] = 0b00000011;
-		GLB_recv_buffer.buffer[i].size = 11;
-		GLB_recv_buffer.write++;
-	}
+	GLB_recv_buffer.buffer[0].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[0].buffer[1] = 0b00001111;
+	GLB_recv_buffer.buffer[0].buffer[2] = 0b11110110;
+	GLB_recv_buffer.buffer[0].buffer[3] = 0b11101110;
+	GLB_recv_buffer.buffer[0].buffer[4] = 0b10110011;
+	GLB_recv_buffer.buffer[0].buffer[5] = 0b11010101;
+	GLB_recv_buffer.buffer[0].buffer[6] = 0b11011011;
+	GLB_recv_buffer.buffer[0].buffer[7] = 0b10100111;
+	GLB_recv_buffer.buffer[0].buffer[8] = 0b01101110;
+	GLB_recv_buffer.buffer[0].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[0].buffer[10] = 0b00000011;
+	GLB_recv_buffer.buffer[0].size = 11;
+	GLB_recv_buffer.write++;
+
+   /*	Trame de test avec bitstuffing
+    *   /!\ erreur de bit stuffing (bit 34)/!\
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 0
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[1].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[1].buffer[1] = 0b00001111;
+	GLB_recv_buffer.buffer[1].buffer[2] = 0b11110110;
+	GLB_recv_buffer.buffer[1].buffer[3] = 0b11101110;
+	GLB_recv_buffer.buffer[1].buffer[4] = 0b10110111;
+	GLB_recv_buffer.buffer[1].buffer[5] = 0b11010101;
+	GLB_recv_buffer.buffer[1].buffer[6] = 0b11011011;
+	GLB_recv_buffer.buffer[1].buffer[7] = 0b10100111;
+	GLB_recv_buffer.buffer[1].buffer[8] = 0b01101110;
+	GLB_recv_buffer.buffer[1].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[1].buffer[10] = 0b00000011;
+	GLB_recv_buffer.buffer[1].size = 11;
+	GLB_recv_buffer.write++;
+
+   /*	Trame de test avec bitstuffing
+	*   /!\ erreur de r0 /!\
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 1
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[2].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[2].buffer[1] = 0b00101111;
+	GLB_recv_buffer.buffer[2].buffer[2] = 0b01111010;
+	GLB_recv_buffer.buffer[2].buffer[3] = 0b11110111;
+	GLB_recv_buffer.buffer[2].buffer[4] = 0b11011001;
+	GLB_recv_buffer.buffer[2].buffer[5] = 0b11101010;
+	GLB_recv_buffer.buffer[2].buffer[6] = 0b11101101;
+	GLB_recv_buffer.buffer[2].buffer[7] = 0b01010011;
+	GLB_recv_buffer.buffer[2].buffer[8] = 0b10110111;
+	GLB_recv_buffer.buffer[2].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[2].buffer[10] = 0b00000001;
+	GLB_recv_buffer.buffer[2].size = 11;
+	GLB_recv_buffer.write++;
+
+   /*	Trame de test avec bitstuffing sans erreur
+    *   /!\ erreur d'ID /!\
+	*	sof  	: 0
+	*	id 		: 0x5ac
+	*	rtr	 	: 0
+	*	r0 		: 1
+	*	r1 		: 0
+	*	dlc 	: 0x4
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[3].buffer[0] = 0b01011000;
+	GLB_recv_buffer.buffer[3].buffer[1] = 0b00001011;
+	GLB_recv_buffer.buffer[3].buffer[2] = 0b11110110;
+	GLB_recv_buffer.buffer[3].buffer[3] = 0b11101110;
+	GLB_recv_buffer.buffer[3].buffer[4] = 0b10110011;
+	GLB_recv_buffer.buffer[3].buffer[5] = 0b11010101;
+	GLB_recv_buffer.buffer[3].buffer[6] = 0b11011011;
+	GLB_recv_buffer.buffer[3].buffer[7] = 0b10100111;
+	GLB_recv_buffer.buffer[3].buffer[8] = 0b01101110;
+	GLB_recv_buffer.buffer[3].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[3].buffer[10] = 0b00000011;
+	GLB_recv_buffer.buffer[3].size = 11;
+	GLB_recv_buffer.write++;
+
+   /*	Trame de test avec bitstuffing sans erreur
+    *   /!\ erreur de dlc /!\
+	*	sof  	: 0
+	*	id 		: 0x7bc
+	*	rtr	 	: 0
+	*	r0 		: 1
+	*	r1 		: 0
+	*	dlc 	: 0x5
+	*	data 	: 0xdeadbeef
+	*	crc 	: 0xbabe
+	*	ack 	: 0b01 (1)
+	*	eof 	: 0x7f
+	*	inter 	: 0b111 (0x7) */
+
+	GLB_recv_buffer.buffer[4].buffer[0] = 0b01111000;
+	GLB_recv_buffer.buffer[4].buffer[1] = 0b10001111;
+	GLB_recv_buffer.buffer[4].buffer[2] = 0b01111010;
+	GLB_recv_buffer.buffer[4].buffer[3] = 0b11110111;
+	GLB_recv_buffer.buffer[4].buffer[4] = 0b11011001;
+	GLB_recv_buffer.buffer[4].buffer[5] = 0b11101010;
+	GLB_recv_buffer.buffer[4].buffer[6] = 0b11101101;
+	GLB_recv_buffer.buffer[4].buffer[7] = 0b01010011;
+	GLB_recv_buffer.buffer[4].buffer[8] = 0b10110111;
+	GLB_recv_buffer.buffer[4].buffer[9] = 0b11111111;
+	GLB_recv_buffer.buffer[4].buffer[10] = 0b00000001;
+	GLB_recv_buffer.buffer[4].size = 11;
+	GLB_recv_buffer.write++;
 }
 
 void destuf (frame_t* in, decd_frame_t* out) {
@@ -106,8 +229,10 @@ void destuf (frame_t* in, decd_frame_t* out) {
 			} else {
 				scnt ++;
 				// Detection d'erreur
-				if(bit_ref == current_bit)
+				if(bit_ref == current_bit) {
 					out->bs_error = 1;
+					out->bs_error_pos = i*8+j;
+				}
 				is_stuff_bit = 0;
 				cnt = 1;
 				bit_ref = current_bit;
