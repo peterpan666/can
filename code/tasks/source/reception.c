@@ -52,7 +52,7 @@ void USART2_Start()
 	// Start APB1 clock for USART2
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 
-	// GPIOA Configuration for USART2 (TX on PA2 yellow & RX on PA3 orange)
+	// GPIOA Configuration for USART2 (TX on PA2 white & RX on PA3 green)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
