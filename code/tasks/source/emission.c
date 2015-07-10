@@ -30,6 +30,8 @@ static const char message_accueil[nb_message_accueil][70] = {
 	 {"Commande h = Menu d'aide\r\n\n"}
  };
 
+void display_data(decd_frame_t frame);
+
 void emission_timer(void) {
 	//Gestion de la variable temporelle de la tache cligno
 	if(timer_emission != 0){
@@ -85,12 +87,13 @@ void emission_task(void) {
 						break;
 					default:
 						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
-							printf("0x");
 							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
+							/*printf("0x");
 							for (j = (local_frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
 								printf("%x",local_frame.data[j]);
 							}
-							printf("\r\n");
+							printf("\r\n");*/
+							display_data(local_frame);
 						}
 						break;
 				}
@@ -171,6 +174,37 @@ void emission_task(void) {
 				break;
 		}
 	}
+}
+
+void display_data(decd_frame_t frame) {
+	int8_t j = 0;
+
+	if (frame.bs_error) {
+		printf("Erreur de bitstuffing\r\n");
+		return;
+	}
+	if (frame.crc_error) {
+		printf("Erreur de CRC\r\n");
+		return;
+	}
+	if (frame.dlc_error) {
+		printf("Erreur de DLC (taille data)\r\n");
+		return;
+	}
+	if (frame.id_error) {
+		printf("Erreur d'ID\r\n");
+		return;
+	}
+	if (frame.r0_error) {
+		printf("Erreur R0\r\n");
+		return;
+	}
+
+	printf("0x");
+	for (j = (frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {
+		printf("%x",frame.data[j]);
+	}
+	printf("\r\n");
 }
 
 
