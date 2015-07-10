@@ -25,7 +25,7 @@ static char received_char = 0;
 static const char message_accueil[nb_message_accueil][70] = {
 	 {"Sniffer BUS CAN\r\n"},
 	 {"Presentation des commandes\r\n"},
-	 {"Commande f = Affiche les trames decodees en continue\r\n"},
+	 {"Commande f = Affiche les trames decodees en continu\r\n"},
 	 {"Commande d = Affiche les datas en continue\r\n"},
 	 {"Commande s = Stopper l'affichage\r\n"},
 	 {"Commande h = Menu d'aide\r\n\n"}
