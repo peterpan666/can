@@ -64,7 +64,7 @@ void decode_init(void) {
 	*	sof  	: 0
 	*	id 		: 0x7bc
 	*	rtr	 	: 0
-	*	r0 		: 1
+	*	r0 		: 0
 	*	r1 		: 0
 	*	dlc 	: 0x4
 	*	data 	: 0xdeadbeef
@@ -148,7 +148,7 @@ void decode_init(void) {
 	*	sof  	: 0
 	*	id 		: 0x5ac
 	*	rtr	 	: 0
-	*	r0 		: 1
+	*	r0 		: 0
 	*	r1 		: 0
 	*	dlc 	: 0x4
 	*	data 	: 0xdeadbeef
@@ -176,7 +176,7 @@ void decode_init(void) {
 	*	sof  	: 0
 	*	id 		: 0x7bc
 	*	rtr	 	: 0
-	*	r0 		: 1
+	*	r0 		: 0
 	*	r1 		: 0
 	*	dlc 	: 0x5
 	*	data 	: 0xdeadbeef
