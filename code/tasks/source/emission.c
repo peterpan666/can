@@ -13,6 +13,7 @@ extern decd_buffer_t GLB_decd_buffer;
 //déclarations des fonctions
 static void USART3_Start(void);
 static void GPIO_config(void);
+static unsigned char test_frame(decd_frame_t frame);
 
 extern decd_buffer_t GLB_decd_buffer;
 
@@ -93,7 +94,9 @@ void emission_task(void) {
 								printf("%x",local_frame.data[j]);
 							}
 							printf("\r\n");*/
-							display_data(local_frame);
+							if (test_frame(local_frame)) {
+								display_data(local_frame);
+							}
 						}
 						break;
 				}
@@ -109,12 +112,15 @@ void emission_task(void) {
 					case 1:
 						if (GLB_decd_buffer.read != GLB_decd_buffer.write) {
 							local_frame = GLB_decd_buffer.buffer[GLB_decd_buffer.read++];
-							printf("| ");
+							if (test_frame(local_frame) == 0) {
+								i = 1;
+							}
 						} else {
-							i = 1;
+							i = 1; //voir switch (i++)
 						}
 						break;
 					case 2:
+						printf("| ");
 						printf("%d", local_frame.fixed_field.fields_11.sof);
 						printf(" | ");
 						break;
@@ -176,29 +182,33 @@ void emission_task(void) {
 	}
 }
 
-void display_data(decd_frame_t frame) {
-	int8_t j = 0;
-
+unsigned char test_frame(decd_frame_t frame) {
 	if (frame.bs_error) {
-		printf("Erreur de bitstuffing\r\n");
-		return;
+		printf("Erreur de bitstuffing @bit: %d\r\n", frame.bs_error_pos);
+		return 0;
 	}
 	if (frame.crc_error) {
 		printf("Erreur de CRC\r\n");
-		return;
+		return 0;
 	}
 	if (frame.dlc_error) {
-		printf("Erreur de DLC (taille data)\r\n");
-		return;
+		printf("Erreur de DLC. DLC reçu %d, taille des données %d\r\n", frame.fixed_field.fields_11.dlc, frame.real_dlc);
+		return 0;
 	}
 	if (frame.id_error) {
-		printf("Erreur d'ID\r\n");
-		return;
+		printf("0x%x n'est pas un ID connu dans la liste des ID valides\r\n", frame.fixed_field.fields_11.id);
+		return 0;
 	}
 	if (frame.r0_error) {
 		printf("Erreur R0\r\n");
-		return;
+		return 0;
 	}
+
+	return 1;
+}
+
+void display_data(decd_frame_t frame) {
+	int8_t j = 0;
 
 	printf("0x");
 	for (j = (frame.fixed_field.fields_11.dlc - 1); j >= 0; j--) {

@@ -46,6 +46,7 @@ typedef struct decd_frame {
 	unsigned crc_error:1;
 	unsigned r0_error:1;
 	unsigned dlc_error:1;
+	unsigned char real_dlc;
 	unsigned id_error:1;
 } decd_frame_t;
 
